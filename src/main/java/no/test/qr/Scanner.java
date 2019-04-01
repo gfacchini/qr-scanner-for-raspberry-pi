@@ -99,9 +99,9 @@ public class Scanner {
         } catch (IOException e) {
             logger.error("I/O error acquiring bitmap: {}", e.getMessage());
         } catch (SQLException e) {
-            logger.error("I/O error connection to database", e.getMessage());
+            logger.error("I/O error connection to database : {}", e.getMessage());
         } catch (Exception e) {
-            logger.error("Unknown Error", e);
+            logger.error("Unknown Error : {}", e);
         }
 
         return result;
