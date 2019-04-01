@@ -72,7 +72,6 @@ public class Scanner {
 
             System.out.println(result);
 
-
             Calendar calendar = Calendar.getInstance();
             int hours = calendar.get(Calendar.HOUR_OF_DAY);
             int minutes = (calendar.get(Calendar.MINUTE) / 5) * 5;
@@ -80,7 +79,6 @@ public class Scanner {
             Class.forName("org.postgresql.Driver");
             DriverManager.getConnection("jdbc:postgresql://" + DB_ADDRESS + ":5432/postgres",
                     "postgres", DB_PASSWORD);
-
 
             stmt = c.createStatement();
             String sql = "INSERT INTO " + DB_TABLE + " (qr, c" + READER_NUMBER + ")" +
