@@ -4,6 +4,14 @@ package no.test.qr;
 import com.google.zxing.*;
 import com.google.zxing.common.HybridBinarizer;
 import com.google.zxing.qrcode.QRCodeReader;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,10 +19,11 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Calendar;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.Properties;
 
 
@@ -22,11 +31,10 @@ public class Scanner {
 
     private Logger logger = LoggerFactory.getLogger(Scanner.class);
     private static final String FILE_NAME = "/tmp/scan.png";
-    private String DB_ADDRESS;
-    private String DB_PASSWORD;
-    private String DB_TABLE;
-    private String READER_NUMBER;
+    private String BACKEND_ADDRESS;
+    private String READER_STATUS;
     private Properties properties;
+    private static final HttpClient httpclient = HttpClients.createDefault();
 
 
     private final QRCodeReader reader;
@@ -40,11 +48,8 @@ public class Scanner {
             stream = new BufferedInputStream(new FileInputStream("qr-scan.properties"));
             properties.load(stream);
             stream.close();
-            this.DB_ADDRESS = properties.getProperty("db_address");
-            this.DB_PASSWORD = properties.getProperty("db_password");
-            this.DB_TABLE = properties.getProperty("db_table");
-            this.READER_NUMBER = properties.getProperty("reader_number");
-
+            this.BACKEND_ADDRESS = properties.getProperty("backend_address");
+            this.READER_STATUS = properties.getProperty("reader_status");
         } catch (FileNotFoundException e) {
             logger.error("Properties file not found 'qr-scan.properties'", e);
         } catch (IOException e) {
@@ -72,21 +77,19 @@ public class Scanner {
 
             System.out.println(result);
 
-            Calendar calendar = Calendar.getInstance();
-            int hours = calendar.get(Calendar.HOUR_OF_DAY);
-            int minutes = (calendar.get(Calendar.MINUTE) / 5) * 5;
+            HttpPost httppost = new HttpPost(BACKEND_ADDRESS + "/" + READER_STATUS);
 
-            Class.forName("org.postgresql.Driver");
-            DriverManager.getConnection("jdbc:postgresql://" + DB_ADDRESS + ":5432/postgres",
-                    "postgres", DB_PASSWORD);
+            List<NameValuePair> params = new ArrayList<NameValuePair>(2);
+            params.add(new BasicNameValuePair("qr", result));
+            params.add(new BasicNameValuePair("timestamp", new Date().toString()));
+            httppost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
 
-            stmt = c.createStatement();
-            String sql = "INSERT INTO " + DB_TABLE + " (qr, c" + READER_NUMBER + ")" +
-                    "VALUES (" + result + "," + hours + ":" + minutes + ")";
+            HttpResponse response = httpclient.execute(httppost);
+            HttpEntity entity = response.getEntity();
 
-            stmt.executeUpdate(sql);
-            stmt.close();
-            c.close();
+            if (entity != null) {
+                System.out.println(entity.getContent());
+            }
 
         } catch (NotFoundException e) {
             //logger.error("QR Code was not found in the image. It might have been partially detected but could not be confirmed.");
@@ -98,8 +101,6 @@ public class Scanner {
             logger.error("Error acquiring bitmap", e);
         } catch (IOException e) {
             logger.error("I/O error acquiring bitmap: {}", e.getMessage());
-        } catch (SQLException e) {
-            logger.error("I/O error connection to database : {}", e.getMessage());
         } catch (Exception e) {
             logger.error("Unknown Error : {}", e);
         }
