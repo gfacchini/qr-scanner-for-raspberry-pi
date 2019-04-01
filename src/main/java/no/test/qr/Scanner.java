@@ -14,6 +14,8 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.net.URLEncoder;
+
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
