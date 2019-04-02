@@ -45,7 +45,6 @@ public class Scanner {
     private static final HttpClient httpclient = HttpClients.createDefault();
 
 
-
     private final QRCodeReader reader;
 
 
@@ -59,7 +58,6 @@ public class Scanner {
             stream.close();
             this.BACKEND_ADDRESS = properties.getProperty("backend_address");
             this.READER_STATUS = properties.getProperty("reader_status");
-
 
 
         } catch (FileNotFoundException e) {
@@ -114,8 +112,7 @@ public class Scanner {
             params.add(new BasicNameValuePair("qr", result));
             params.add(new BasicNameValuePair("timestamp", new Date().toString()));
 
-            this.URL = URLEncoder.encode("http://" + BACKEND_ADDRESS + "/" + READER_STATUS);
-            this.httpPost = new HttpPost(URL);
+            this.httpPost = new HttpPost("http://" + BACKEND_ADDRESS + "/" + READER_STATUS);
 
             httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
 
@@ -132,7 +129,7 @@ public class Scanner {
         } catch (UnsupportedEncodingException e) {
             logger.error("Could not encode Backend URL : {}", e);
         } catch (ClientProtocolException e) {
-            logger.error("Could not instanciate HTTP request : {}", e);
+            logger.error("Could not execute HTTP request : {}", e);
         } catch (IOException e) {
             logger.error("Could send result to Backend : {}", e);
         }
