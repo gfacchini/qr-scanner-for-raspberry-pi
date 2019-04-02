@@ -38,9 +38,12 @@ public class Scanner {
     private String BACKEND_ADDRESS;
     private String READER_STATUS;
     private Properties properties;
-    private static final HttpClient httpclient = HttpClients.createDefault();
     private String URL;
     private HttpPost httpPost;
+
+
+    private static final HttpClient httpclient = HttpClients.createDefault();
+
 
 
     private final QRCodeReader reader;
@@ -57,8 +60,7 @@ public class Scanner {
             this.BACKEND_ADDRESS = properties.getProperty("backend_address");
             this.READER_STATUS = properties.getProperty("reader_status");
 
-            this.URL = URLEncoder.encode("http://" + BACKEND_ADDRESS + "/" + READER_STATUS);
-            this.httpPost = new HttpPost(URL);
+
 
         } catch (FileNotFoundException e) {
             logger.error("Properties file not found 'qr-scan.properties'", e);
@@ -111,6 +113,9 @@ public class Scanner {
             List<NameValuePair> params = new ArrayList<NameValuePair>(2);
             params.add(new BasicNameValuePair("qr", result));
             params.add(new BasicNameValuePair("timestamp", new Date().toString()));
+
+            this.URL = URLEncoder.encode("http://" + BACKEND_ADDRESS + "/" + READER_STATUS);
+            this.httpPost = new HttpPost(URL);
 
             httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
 
