@@ -40,7 +40,7 @@ public class Scanner {
     private String READER_STATUS;
     private Properties properties;
 
-    private static final int CONNECTION_TIMEOUT_MS = 5 * 1000; // Timeout in millis.
+    private static final int CONNECTION_TIMEOUT_MS = 10 * 1000; // Timeout in millis.
     private static final RequestConfig REQUEST_CONFIG = RequestConfig.custom()
             .setConnectionRequestTimeout(CONNECTION_TIMEOUT_MS)
             .setConnectTimeout(CONNECTION_TIMEOUT_MS)
@@ -107,7 +107,7 @@ public class Scanner {
         return result;
     }
 
-    private void sendResultToBackend(String result) {
+    public void sendResultToBackend(String result) {
         try {
 
             List<NameValuePair> params = new ArrayList<NameValuePair>(2);
@@ -124,7 +124,8 @@ public class Scanner {
 
             if (entity != null) {
                 System.out.println("HTTP POST status : " + response.getStatusLine().getStatusCode());
-                System.out.println(entity.getContent());
+                entity.getContent().close();
+
             }
 
         } catch (UnsupportedEncodingException e) {
