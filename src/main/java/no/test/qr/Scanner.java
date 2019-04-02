@@ -91,6 +91,8 @@ public class Scanner {
             if (!this.alreadyRead.containsKey(result)) {
                 this.alreadyRead.put(result, new Date().getTime());
                 sendResultToBackend(result);
+            }else {
+                logger.warn("QR Code was successfully detected and decoded, but was already scanned on that sensor");
             }
         } catch (NotFoundException e) {
             //logger.error("QR Code was not found in the image. It might have been partially detected but could not be confirmed.");
