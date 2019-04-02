@@ -14,6 +14,8 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.net.URLEncoder;
+
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -77,7 +79,8 @@ public class Scanner {
 
             System.out.println(result);
 
-            HttpPost httppost = new HttpPost(BACKEND_ADDRESS + "/" + READER_STATUS);
+            String URL = URLEncoder.encode(BACKEND_ADDRESS + "/" + READER_STATUS);
+            HttpPost httppost = new HttpPost(URL);
 
             List<NameValuePair> params = new ArrayList<NameValuePair>(2);
             params.add(new BasicNameValuePair("qr", result));
