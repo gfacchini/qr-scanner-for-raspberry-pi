@@ -74,8 +74,9 @@ public class Scanner {
     }
 
     public static void main(String[] args) {
+        Scanner scanner = new Scanner();
         while (true) {
-            new Scanner().scan();
+            scanner.scan();
         }
     }
 
@@ -91,7 +92,7 @@ public class Scanner {
             if (!this.alreadyRead.containsKey(result)) {
                 this.alreadyRead.put(result, new Date().getTime());
                 sendResultToBackend(result);
-            }else {
+            } else {
                 logger.warn("QR Code was successfully detected and decoded, but was already scanned on that sensor");
             }
         } catch (NotFoundException e) {
