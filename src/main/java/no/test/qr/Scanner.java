@@ -57,7 +57,8 @@ public class Scanner {
             this.BACKEND_ADDRESS = properties.getProperty("backend_address");
             this.READER_STATUS = properties.getProperty("reader_status");
 
-            this.httpPost = new HttpPost("http://" + BACKEND_ADDRESS + "/" + READER_STATUS);
+            this.URL = URLEncoder.encode(BACKEND_ADDRESS + "/" + READER_STATUS);
+            this.httpPost = new HttpPost(URL);
 
         } catch (FileNotFoundException e) {
             logger.error("Properties file not found 'qr-scan.properties'", e);
