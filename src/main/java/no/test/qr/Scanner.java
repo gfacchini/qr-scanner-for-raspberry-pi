@@ -26,10 +26,7 @@ import java.io.*;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 
 public class Scanner {
@@ -40,7 +37,7 @@ public class Scanner {
     private String READER_STATUS;
     private Properties properties;
 
-    private List<String> alreadyRead;
+    private Map<String, Long> alreadyRead;
 
     private static final int CONNECTION_TIMEOUT_MS = 10 * 1000; // Timeout in millis.
     private static final RequestConfig REQUEST_CONFIG = RequestConfig.custom()
@@ -65,7 +62,7 @@ public class Scanner {
             this.BACKEND_ADDRESS = properties.getProperty("backend_address");
             this.READER_STATUS = properties.getProperty("reader_status");
 
-            this.alreadyRead = new ArrayList<String>();
+            this.alreadyRead = new HashMap<>();
 
         } catch (FileNotFoundException e) {
             logger.error("Properties file not found 'qr-scan.properties'", e);
@@ -91,8 +88,8 @@ public class Scanner {
                     .decode(acquireBitmapFromCamera())
                     .getText();
             logger.info("Scan Decode is successful: " + result);
-            if (!this.alreadyRead(result)) {
-                this.alreadyRead.add(result);
+            if (!this.alreadyRead.containsKey(result)) {
+                this.alreadyRead.put(result, new Date().getTime());
                 sendResultToBackend(result);
             }
         } catch (NotFoundException e) {
@@ -110,15 +107,6 @@ public class Scanner {
         }
 
         return result;
-    }
-
-    public boolean alreadyRead(String qrCode) {
-        for (String element : this.alreadyRead) {
-            if (element.equalsIgnoreCase(qrCode)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     public void sendResultToBackend(String result) {
