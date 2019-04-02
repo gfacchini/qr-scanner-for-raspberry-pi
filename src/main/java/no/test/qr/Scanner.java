@@ -9,6 +9,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClients;
@@ -38,12 +39,15 @@ public class Scanner {
     private String BACKEND_ADDRESS;
     private String READER_STATUS;
     private Properties properties;
-    private String URL;
-    private HttpPost httpPost;
 
+    private static final int CONNECTION_TIMEOUT_MS = 5 * 1000; // Timeout in millis.
+    private static final RequestConfig REQUEST_CONFIG = RequestConfig.custom()
+            .setConnectionRequestTimeout(CONNECTION_TIMEOUT_MS)
+            .setConnectTimeout(CONNECTION_TIMEOUT_MS)
+            .setSocketTimeout(CONNECTION_TIMEOUT_MS)
+            .build();
 
     private static final HttpClient httpclient = HttpClients.createDefault();
-
 
     private final QRCodeReader reader;
 
@@ -85,7 +89,6 @@ public class Scanner {
                     .getText();
             logger.info("Scan Decode is successful: " + result);
 
-            System.out.println(result);
             sendResultToBackend(result);
         } catch (NotFoundException e) {
             //logger.error("QR Code was not found in the image. It might have been partially detected but could not be confirmed.");
@@ -101,7 +104,6 @@ public class Scanner {
             logger.error("Unknown Error : {}", e);
         }
 
-
         return result;
     }
 
@@ -112,13 +114,12 @@ public class Scanner {
             params.add(new BasicNameValuePair("qr", result));
             params.add(new BasicNameValuePair("timestamp", new Date().toString()));
 
-            this.httpPost = new HttpPost("http://" + BACKEND_ADDRESS + "/" + READER_STATUS);
-
+            HttpPost httpPost = new HttpPost("http://" + BACKEND_ADDRESS + "/" + READER_STATUS);
+            httpPost.setConfig(REQUEST_CONFIG);
             httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
 
-            HttpResponse response = null;
+            HttpResponse response = httpclient.execute(httpPost);
 
-            response = httpclient.execute(httpPost);
             HttpEntity entity = response.getEntity();
 
             if (entity != null) {
