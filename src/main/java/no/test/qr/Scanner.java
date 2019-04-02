@@ -40,6 +40,8 @@ public class Scanner {
     private String READER_STATUS;
     private Properties properties;
 
+    private List<String> alreadyRead;
+
     private static final int CONNECTION_TIMEOUT_MS = 10 * 1000; // Timeout in millis.
     private static final RequestConfig REQUEST_CONFIG = RequestConfig.custom()
             .setConnectionRequestTimeout(CONNECTION_TIMEOUT_MS)
@@ -63,6 +65,7 @@ public class Scanner {
             this.BACKEND_ADDRESS = properties.getProperty("backend_address");
             this.READER_STATUS = properties.getProperty("reader_status");
 
+            this.alreadyRead = new ArrayList<String>();
 
         } catch (FileNotFoundException e) {
             logger.error("Properties file not found 'qr-scan.properties'", e);
@@ -88,8 +91,10 @@ public class Scanner {
                     .decode(acquireBitmapFromCamera())
                     .getText();
             logger.info("Scan Decode is successful: " + result);
-
-            sendResultToBackend(result);
+            if (!alreadyRead.contains(result)) {
+                this.alreadyRead.add(result);
+                sendResultToBackend(result);
+            }
         } catch (NotFoundException e) {
             //logger.error("QR Code was not found in the image. It might have been partially detected but could not be confirmed.");
         } catch (ChecksumException e) {
