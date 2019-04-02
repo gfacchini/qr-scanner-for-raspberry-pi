@@ -7,6 +7,7 @@ import com.google.zxing.qrcode.QRCodeReader;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
@@ -14,6 +15,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.net.URLEncoder;
 
 
@@ -37,6 +39,8 @@ public class Scanner {
     private String READER_STATUS;
     private Properties properties;
     private static final HttpClient httpclient = HttpClients.createDefault();
+    private String URL;
+    private HttpPost httpPost;
 
 
     private final QRCodeReader reader;
@@ -52,6 +56,10 @@ public class Scanner {
             stream.close();
             this.BACKEND_ADDRESS = properties.getProperty("backend_address");
             this.READER_STATUS = properties.getProperty("reader_status");
+
+            this.URL = URLEncoder.encode(BACKEND_ADDRESS + "/" + READER_STATUS);
+            this.httpPost = new HttpPost(URL);
+
         } catch (FileNotFoundException e) {
             logger.error("Properties file not found 'qr-scan.properties'", e);
         } catch (IOException e) {
@@ -68,7 +76,7 @@ public class Scanner {
     }
 
     public String scan() {
-        String result = null;
+        String result = "";
         Statement stmt;
         Connection c = null;
         try {
@@ -78,22 +86,7 @@ public class Scanner {
             logger.info("Scan Decode is successful: " + result);
 
             System.out.println(result);
-
-            String URL = URLEncoder.encode(BACKEND_ADDRESS + "/" + READER_STATUS);
-            HttpPost httppost = new HttpPost(URL);
-
-            List<NameValuePair> params = new ArrayList<NameValuePair>(2);
-            params.add(new BasicNameValuePair("qr", result));
-            params.add(new BasicNameValuePair("timestamp", new Date().toString()));
-            httppost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
-
-            HttpResponse response = httpclient.execute(httppost);
-            HttpEntity entity = response.getEntity();
-
-            if (entity != null) {
-                System.out.println(entity.getContent());
-            }
-
+            sendResultToBackend(result);
         } catch (NotFoundException e) {
             //logger.error("QR Code was not found in the image. It might have been partially detected but could not be confirmed.");
         } catch (ChecksumException e) {
@@ -103,12 +96,41 @@ public class Scanner {
         } catch (InterruptedException e) {
             logger.error("Error acquiring bitmap", e);
         } catch (IOException e) {
-            logger.error("I/O error acquiring bitmap: {}", e.getMessage());
+            logger.error("I/O error : {}", e.getMessage());
         } catch (Exception e) {
             logger.error("Unknown Error : {}", e);
         }
 
+
         return result;
+    }
+
+    private void sendResultToBackend(String result) {
+        try {
+
+            List<NameValuePair> params = new ArrayList<NameValuePair>(2);
+            params.add(new BasicNameValuePair("qr", result));
+            params.add(new BasicNameValuePair("timestamp", new Date().toString()));
+
+            httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+
+            HttpResponse response = null;
+
+            response = httpclient.execute(httpPost);
+            HttpEntity entity = response.getEntity();
+
+            if (entity != null) {
+                System.out.println("HTTP POST status : " + response.getStatusLine().getStatusCode());
+                System.out.println(entity.getContent());
+            }
+
+        } catch (UnsupportedEncodingException e) {
+            logger.error("Could not encode Backend URL : {}", e);
+        } catch (ClientProtocolException e) {
+            logger.error("Could not instanciate HTTP request : {}", e);
+        } catch (IOException e) {
+            logger.error("Could send result to Backend : {}", e);
+        }
     }
 
     private BinaryBitmap acquireBitmapFromCamera() throws InterruptedException, IOException {
