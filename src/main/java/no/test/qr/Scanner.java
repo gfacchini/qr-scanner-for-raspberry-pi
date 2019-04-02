@@ -91,7 +91,7 @@ public class Scanner {
                     .decode(acquireBitmapFromCamera())
                     .getText();
             logger.info("Scan Decode is successful: " + result);
-            if (!alreadyRead.contains(result)) {
+            if (!this.alreadyRead(result)) {
                 this.alreadyRead.add(result);
                 sendResultToBackend(result);
             }
@@ -110,6 +110,15 @@ public class Scanner {
         }
 
         return result;
+    }
+
+    public boolean alreadyRead(String qrCode) {
+        for (String element : this.alreadyRead) {
+            if (element.equalsIgnoreCase(qrCode)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void sendResultToBackend(String result) {
